@@ -1,6 +1,8 @@
 using Amazon.DynamoDBv2;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using Amazon.SQS;
+using Amazon.SQS.Model;
 using Newtonsoft.Json;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
@@ -18,8 +20,18 @@ public class DemoFunction
     /// <returns></returns>
     public async Task<APIGatewayProxyResponse> DemoFunctionHandler(APIGatewayProxyRequest request, ILambdaContext context)
     {
+        var sqsClient = new AmazonSQSClient();        
+
         var userProvider = new UserProvider(new AmazonDynamoDBClient());
         var users = await userProvider.GetUsersAsync();
+
+        var message = new SendMessageRequest
+        {
+            QueueUrl = "https://sqs.eu-central-1.amazonaws.com/599951294124/demo-queue",
+            MessageBody = "hello from lambda"
+        };
+
+        await sqsClient.SendMessageAsync(message);
 
         return new APIGatewayProxyResponse
         {
